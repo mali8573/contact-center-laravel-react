@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ContactRequest extends FormRequest
+class StoreContactRequest extends FormRequest
 {
     /**
      * בדיקת הרשאות - במערכת כזו כדאי לוודא שהמשתמש מחובר.

@@ -46,10 +46,18 @@ class ContactService
 }
 public function restoreContact($id)
 {
-    // שימוש במודל עם withTrashed כדי למצוא גם את אלו שב"סל המחזור"
-    $contact = \App\Models\Contact::withTrashed()->findOrFail($id);
-    $contact->restore();
-    return $contact;
+    return DB::transaction(function () use ($id) {
+        // מציאת איש הקשר גם אם הוא מחוק
+        $contact = \App\Models\Contact::withTrashed()->findOrFail($id);
+        
+        // שחזור איש הקשר
+        $contact->restore();
+
+        // שחזור כל האינטראקציות שנמחקו יחד איתו
+        $contact->interactions()->restore();
+
+        return $contact;
+    });
 }
     public function getContactDetails($id)
     {
@@ -70,17 +78,19 @@ public function restoreContact($id)
         });
     }
 
-    public function deleteContact($id)
-    {
+public function deleteContact($id)
+{
+    return DB::transaction(function () use ($id) {
+        // 1. מציאת איש הקשר (כולל האינטראקציות שלו)
         $contact = $this->getContactDetails($id);
 
-        // ולידציה עסקית מתקדמת
-        if ($contact->interactions()->exists()) {
-            throw new Exception("מטעמי אבטחת מידע, לא ניתן למחוק איש קשר עם היסטוריית פעולות.");
-        }
+        // 2. מחיקה רכה של כל האינטראקציות (בגלל ה-Trait הן רק יקבלו deleted_at)
+        $contact->interactions()->delete();
 
+        // 3. מחיקה רכה של איש הקשר עצמו
         return $this->repository->delete($id);
-    }
+    });
+}
   
     
 }

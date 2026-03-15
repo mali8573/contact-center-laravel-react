@@ -6,10 +6,10 @@ use App\Models\Interaction;
 
 class InteractionRepository implements InteractionRepositoryInterface
 {
-   public function getAllByContact($contactId)
+public function getAllByContact($contactId)
 {
     return Interaction::where('contact_id', $contactId)
-        ->orderBy('interaction_date', 'desc')
+        ->orderBy('timestamp', 'desc') // שינוי ל-timestamp לפי הדרישות
         ->get();
 }
 

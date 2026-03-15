@@ -11,25 +11,38 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
+   ->withMiddleware(function (Middleware $middleware) {
+    // 1. הוספת CORS כעדיפות עליונה
+    $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
 
-        $middleware->alias([
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
-        ]);
+    $middleware->validateCsrfTokens(except: [
+        'api/*', 
+    ]);
 
-        //
-    })
-->withExceptions(function (Exceptions $exceptions) {
-    $exceptions->render(function (\Exception $e, $request) {
+    $middleware->api(prepend: [
+        \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+    ]);
+
+    $middleware->alias([
+        'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+    ]);
+})
+ ->withExceptions(function (Exceptions $exceptions) {
+    $exceptions->render(function (\Throwable $e, $request) {
         if ($request->is('api/*')) {
+            // זיהוי קוד השגיאה - אם אין קוד (כמו בשגיאות קוד PHP), נשתמש ב-500
+            $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+            
+            // טיפול ספציפי במודל לא נמצא (404)
+            if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                $statusCode = 404;
+            }
+
             return response()->json([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ], $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException ? 404 : 400);
+                'type' => get_class($e), // עוזר מאוד לניפוי שגיאות
+            ], $statusCode);
         }
     });
-       //
-    })->create();
+})->create();

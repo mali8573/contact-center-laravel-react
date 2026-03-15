@@ -16,6 +16,10 @@ class AppServiceProvider extends ServiceProvider
         \App\Repositories\ContactRepositoryInterface::class,
         \App\Repositories\ContactRepository::class
     );
+    $this->app->bind(
+            \App\Repositories\InteractionRepositoryInterface::class,
+            \App\Repositories\InteractionRepository::class
+        );
     }
 
     /**

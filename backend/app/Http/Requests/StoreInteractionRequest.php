@@ -13,12 +13,15 @@ class StoreInteractionRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'contact_id' => 'required|exists:contacts,id', // מוודא שאיש הקשר קיים בבסיס הנתונים 
-            'type'       => 'required|string|in:phone,email,meeting,other', // מגביל לסוגים הגיוניים
-            'note'       => 'required|string|min:5', // הערה היא חובה לפי הלוגיקה של המערכת 
-            'timestamp'  => 'nullable|date', // אם לא נשלח, הקונטרולר יציב את הזמן הנוכחי 
-        ];
+
+    return [
+        'contact_id' => 'required|exists:contacts,id',
+        // שינינו ל-lowercase כדי לנרמל, או פשוט נוריד את ה-in לבדיקה
+        'type'       => 'required|string', 
+        'note'       => 'required|string|min:2', // הורדנו ל-2 תווים כדי למנוע תסכול
+        'timestamp'  => 'nullable', // גמישות בפורמט התאריך
+    ];
+
     }
 
     public function messages(): array
